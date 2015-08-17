@@ -19,7 +19,7 @@ module Rack
       end
 
       Params = lambda do |request|
-        request.url.query
+        request.query_string
       end
       # TODO: Support multipart requests by not signing them
       Body = lambda do |request|

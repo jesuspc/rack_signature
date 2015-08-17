@@ -1,10 +1,11 @@
 require "rack/signature/version"
 require "rack/signature/validator"
+require "rack/signature/signable_extractor"
 
 module Rack
   class Signature
-    TIMESTAMP_HEADER = 'Timestamp'.freeze
-    SIGNATURE_HEADER = 'Signature'.freeze
+    TIMESTAMP_HEADER = 'HTTP_TIMESTAMP'.freeze
+    SIGNATURE_HEADER = 'HTTP_SIGNATURE'.freeze
 
     attr_accessor :validator, :signable_elms, :signable_extractor
 
@@ -16,30 +17,30 @@ module Rack
     end
 
     def call(env)
-      env[:signature] ||= signature_params(env)
+      env['SIGNATURE'] ||= signature_params(env)
       @app.call env
     end
 
     private
 
     def signature(env)
-      env[:request_headers][SIGNATURE_HEADER]
+      env[SIGNATURE_HEADER]
     end
 
     def timestamp(env)
-      env[:request_headers][TIMESTAMP_HEADER]
+      env[TIMESTAMP_HEADER]
     end
 
     def signature_params(env)
       {
         value: signature(env),
         present: !signature(env).nil?,
-        valid: validator.call(signable(env.request), signature(env), timestamp(env))
+        valid: validator.call(signable(env), signature(env), timestamp(env))
       }
     end
 
-    def signable(request)
-      signable_extractor.call request, signable_elms
+    def signable(env)
+      signable_extractor.call Rack::Request.new(env), signable_elms
     end
   end
 end

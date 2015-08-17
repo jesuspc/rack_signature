@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'rack_signature/version'
+require 'rack/signature/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'rack_signature'
-  spec.version       = RackSignature::VERSION
+  spec.version       = Rack::Signature::VERSION
   spec.authors       = ['Jesus Prieto Colomina']
   spec.email         = ['chus1818@gmail.com']
   spec.summary       = %q(Signed requests as a Rack Middleware)

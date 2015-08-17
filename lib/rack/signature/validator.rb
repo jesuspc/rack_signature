@@ -6,7 +6,7 @@ module Rack
       def call(to_sign, signature, timestamp, opts = {})
         return nil unless signature
         text_to_sign = to_sign.map(&:to_s).join
-        secret = options[:secret] || self.secret
+        secret = opts[:secret] || self.secret
 
         expected_signature = hmac.hexdigest sha1, secret, text_to_sign
 

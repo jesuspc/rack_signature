@@ -1,3 +1,5 @@
-module Rack::Signature
-  VERSION = "0.0.1"
+module Rack
+  class Signature
+    VERSION = "0.0.1"
+  end
 end
