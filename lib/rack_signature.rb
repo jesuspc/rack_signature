@@ -1,1 +1,2 @@
-require "rack/signature"
+require 'signatures'
+require 'rack/signature'

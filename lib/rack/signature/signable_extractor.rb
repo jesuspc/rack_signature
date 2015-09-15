@@ -14,7 +14,8 @@ module Rack
       def self.extractors
         @extractors ||= {
           params: Params,
-          body: Body
+          body: Body,
+          timestamp: Timestamp
         }
       end
 
@@ -25,6 +26,10 @@ module Rack
       Body = lambda do |request|
         request.body.rewind
         request.body.read
+      end
+
+      Timestamp = lambda do |request|
+        request.env["HTTP_TIMESTAMP"]
       end
     end
   end

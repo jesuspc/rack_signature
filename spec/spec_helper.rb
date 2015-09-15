@@ -1,3 +1,6 @@
+require_relative '../lib/rack_signature'
+require "rack/test"
+
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
@@ -21,6 +24,8 @@ RSpec.configure do |config|
   config.profile_examples = 10
 
   config.order = :random
+
+  config.include Rack::Test::Methods
 
   Kernel.srand config.seed
 end
