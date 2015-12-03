@@ -25,7 +25,9 @@ module Rack
       # TODO: Support multipart requests by not signing them
       Body = lambda do |request|
         request.body.rewind
-        request.body.read
+        body = request.body.read
+        request.body.rewind
+        body
       end
 
       Timestamp = lambda do |request|
