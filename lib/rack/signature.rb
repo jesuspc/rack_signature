@@ -14,7 +14,7 @@ module Rack
       self.app = app
       self.keystore = opts.fetch :keystore, {}
       self.validator = opts.fetch :validator, default_validator
-      self.signable_elms = opts.fetch :signable_elms, [:params, :body, :timestamp]
+      self.signable_elms = opts.fetch :signable_elms, [:params, :body, :path, :timestamp]
       self.signable_extractor = opts.fetch :signable_extractor, SignableExtractor
     end
 

@@ -15,8 +15,13 @@ module Rack
         @extractors ||= {
           params: Params,
           body: Body,
-          timestamp: Timestamp
+          timestamp: Timestamp,
+          path: Path
         }
+      end
+
+      Path = lambda do |request|
+        request.path
       end
 
       Params = lambda do |request|
