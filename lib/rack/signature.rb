@@ -1,5 +1,6 @@
 require 'signatures/validators/basic'
 require 'rack/signature/signable_extractor'
+require 'logger'
 
 module Rack
   class Signature
@@ -7,15 +8,18 @@ module Rack
     SIGNATURE_HEADER = 'HTTP_SIGNATURE'.freeze
     SIGNATURE_KEY_HEADER = 'HTTP_SIGNATURE_KEY'.freeze
     SIGNATURE_ENV = 'SIGNATURE'.freeze
+    DEFAULT_LOGGER = ::Logger.new('/dev/null')
 
-    attr_reader :app, :validator, :signable_elms, :signable_extractor, :keystore
+    attr_reader :app, :validator, :signable_elms, :signable_extractor, :keystore, :logger, :validator_opts
 
     def initialize(app, opts = {})
       self.app = app
       self.keystore = opts.fetch :keystore, {}
+      self.validator_opts = opts.fetch :validator_opts, {}
       self.validator = opts.fetch :validator, default_validator
       self.signable_elms = opts.fetch :signable_elms, [:params, :body, :path, :timestamp]
       self.signable_extractor = opts.fetch :signable_extractor, SignableExtractor
+      self.logger = opts.fetch :logger, DEFAULT_LOGGER
     end
 
     def call(env)
@@ -38,20 +42,37 @@ module Rack
     end
 
     def default_validator
-      @default_validator ||= Signatures::Validators::Basic.new(keystore: keystore)
+      @default_validator ||= Signatures::Validators::Basic.new({ keystore: keystore }.merge validator_opts)
     end
 
     def signature_params(env)
+      _signature = signature(env)
+      _timestamp = timestamp(env)
+      _signature_key = signature_key(env)
+      _to_validate = signable(env)
+      _key_known = !!keystore[_signature_key]
+      _valid = validator.call(
+        to_validate: _to_validate,
+        signature: _signature,
+        timestamp: _timestamp,
+        key: _signature_key
+      )
+      _expired = validator.expired_signature?(_timestamp)
+
+      logger.info do
+        "[RackSignature] Validating signature #{_signature} with timestamp "\
+        "#{_timestamp}, key #{_signature_key} and payload #{_to_validate}. "\
+        "Key was #{_key_known ? 'recognised' : 'unrecognised'}. "\
+        "Timestamp was #{_expired ? 'expired' : 'not expired'}. "\
+        "Result was #{_valid ? 'successful' : 'unsuccessful'}."
+      end
+
       {
-        value: signature(env),
-        present: !signature(env).nil?,
-        valid: validator.call(
-          to_validate: signable(env),
-          signature: signature(env),
-          timestamp: timestamp(env),
-          key: signature_key(env)
-        ),
-        key_known: !!keystore[signature_key(env)]
+        value: _signature,
+        present: !_signature.nil?,
+        valid: _valid,
+        key_known: _key_known,
+        expired: _expired
       }
     end
 
@@ -61,6 +82,6 @@ module Rack
 
     private
 
-    attr_writer :app, :validator, :signable_elms, :signable_extractor, :keystore
+    attr_writer :app, :validator, :signable_elms, :signable_extractor, :keystore, :logger, :validator_opts
   end
 end
