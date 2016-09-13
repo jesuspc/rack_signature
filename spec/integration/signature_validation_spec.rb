@@ -32,7 +32,10 @@ RSpec.describe 'Signature validation', integration: true do
   end
 
   context 'when default configuration' do
-    let(:opts) { { keystore: { key: secret } } }
+    let(:opts) { { keystore: { key: secret }, validator_opts: { clock: fake_clock, expiration_time: expiration_time } } }
+    let(:fake_clock) { double :fake_clock, now: current_time }
+    let(:current_time) { 0 }
+    let(:expiration_time) { 10 }
 
     context 'when the signature is not present' do
       let(:signature) { nil }
@@ -43,7 +46,8 @@ RSpec.describe 'Signature validation', integration: true do
           'value' => signature,
           'present' => false,
           'valid' => false,
-          'key_known' => true
+          'key_known' => true,
+          'expired' => false
         )
       end
     end
@@ -53,7 +57,7 @@ RSpec.describe 'Signature validation', integration: true do
 
       context 'when the signature is valid' do
         let(:signature) do
-          Signatures::Signers::Basic.new.call("param=1#{timestamp}", secret: secret)
+          Signatures::Signers::Basic.new.call("param=1/#{timestamp}", secret: secret)
         end
 
         it 'sets the env\'s signature variable appropriately' do
@@ -62,7 +66,8 @@ RSpec.describe 'Signature validation', integration: true do
             'value' => signature,
             'present' => true,
             'valid' => true,
-            'key_known' => true
+            'key_known' => true,
+            'expired' => false
           )
         end
       end
@@ -74,8 +79,26 @@ RSpec.describe 'Signature validation', integration: true do
             'value' => signature,
             'present' => true,
             'valid' => false,
-            'key_known' => true
+            'key_known' => true,
+            'expired' => false
           )
+        end
+      end
+
+      context 'when the signature is expired' do
+        let(:current_time) { 12 }
+        let(:timestamp) { 1 }
+        let(:expiration_time) { 10 }
+
+        it 'sets the env\'s signature variable appropriately' do
+          do_request
+          expect(JSON.parse last_response.body).to eq(
+                                                     'value' => signature,
+                                                     'present' => true,
+                                                     'valid' => false,
+                                                     'key_known' => true,
+                                                     'expired' => true
+                                                   )
         end
       end
 
@@ -88,7 +111,8 @@ RSpec.describe 'Signature validation', integration: true do
             'value' => signature,
             'present' => true,
             'valid' => false,
-            'key_known' => false
+            'key_known' => false,
+            'expired' => false
           )
         end
       end
