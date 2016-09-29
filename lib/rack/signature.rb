@@ -59,12 +59,19 @@ module Rack
       )
       _expired = validator.expired_signature?(_timestamp)
 
-      logger.info do
-        "[RackSignature] Validating signature #{_signature} with timestamp "\
-        "#{_timestamp}, key #{_signature_key} and payload #{_to_validate}. "\
-        "Key was #{_key_known ? 'recognised' : 'unrecognised'}. "\
-        "Timestamp was #{_expired ? 'expired' : 'not expired'}. "\
-        "Result was #{_valid ? 'successful' : 'unsuccessful'}."
+      if _signature
+        logger.info do
+          "[RackSignature] Validating signature #{_signature} with timestamp "\
+          "#{_timestamp || '<Not present>'}, key "\
+          "#{_signature_key || '<Not present>'} and payload #{_to_validate}. "\
+          "Key was #{_key_known ? 'recognised' : 'unrecognised'}. "\
+          "Timestamp was #{_expired ? 'expired' : 'not expired'}. "\
+          "Validation was #{_valid ? 'successful' : 'unsuccessful'}."
+        end
+      else
+        logger.info do
+          "[RackSignature] No signature found, skipping validation..."
+        end
       end
 
       {
